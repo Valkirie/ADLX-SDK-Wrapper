@@ -267,7 +267,7 @@ extern "C" {
         return res;
     }
 
-    ADLX_Wrapper bool HasIntegerScalingSupport(int GPU)
+    ADLX_Wrapper bool HasIntegerScalingSupport(int displayIdx)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -284,9 +284,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayIntegerScalingPtr displayIntegerScaling;
@@ -304,7 +303,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool GetIntegerScaling(int GPU)
+    ADLX_Wrapper bool GetIntegerScaling(int displayIdx)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -321,9 +320,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayIntegerScalingPtr displayIntegerScaling;
@@ -341,7 +339,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool SetIntegerScaling(int GPU, bool enabled)
+    ADLX_Wrapper bool SetIntegerScaling(int displayIdx, bool enabled)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -358,9 +356,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayIntegerScalingPtr displayIntegerScaling;
@@ -377,7 +374,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool HasGPUScalingSupport(int GPU)
+    ADLX_Wrapper bool HasGPUScalingSupport(int displayIdx)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -394,9 +391,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayGPUScalingPtr gpuScaling;
@@ -414,7 +410,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool GetGPUScaling(int GPU)
+    ADLX_Wrapper bool GetGPUScaling(int displayIdx)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -431,9 +427,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayGPUScalingPtr gpuScaling;
@@ -451,7 +446,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool SetGPUScaling(int GPU, bool enabled)
+    ADLX_Wrapper bool SetGPUScaling(int displayIdx, bool enabled)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -468,9 +463,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayGPUScalingPtr gpuScaling;
@@ -487,7 +481,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool HasScalingModeSupport(int GPU)
+    ADLX_Wrapper bool HasScalingModeSupport(int displayIdx)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -504,9 +498,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayScalingModePtr scalingMode;
@@ -524,7 +517,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper int GetScalingMode(int GPU)
+    ADLX_Wrapper int GetScalingMode(int displayIdx)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -541,9 +534,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayScalingModePtr scalingMode;
@@ -561,7 +553,7 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool SetScalingMode(int GPU, int mode)
+    ADLX_Wrapper bool SetScalingMode(int displayIdx, int mode)
     {
         // Define return code
         ADLX_RESULT res = ADLX_FAIL;
@@ -578,9 +570,8 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 // Inspect for the first display in the list
-                adlx_uint index = GPU;
                 IADLXDisplayPtr display;
-                res = displayList->At(index, &display);
+                res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
                 {
                     IADLXDisplayScalingModePtr scalingMode;
@@ -789,8 +780,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Anti Lag interface
@@ -827,8 +817,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Anti Lag interface
@@ -864,8 +853,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Boost interface
@@ -902,8 +890,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Boost interface
@@ -939,8 +926,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Boost interface
@@ -977,8 +963,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Boost interface
@@ -1014,8 +999,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Chill interface
@@ -1052,8 +1036,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Chill interface
@@ -1089,8 +1072,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Chill interface
@@ -1127,8 +1109,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Chill interface
@@ -1164,8 +1145,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Chill interface
@@ -1202,8 +1182,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Chill interface
@@ -1239,8 +1218,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Image Sharpening interface
@@ -1277,8 +1255,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Image Sharpening interface
@@ -1314,8 +1291,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Image Sharpening interface
@@ -1352,8 +1328,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     // Get Image Sharpening interface
@@ -1441,7 +1416,7 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 IADLXGPUPtr oneGPU;
-                res = gpus->At(0, &oneGPU);
+                res = gpus->At(GPU, &oneGPU);
                 if (ADLX_SUCCEEDED(res) && oneGPU != nullptr)
                 {
                     adlx_bool supported = false;
@@ -1489,7 +1464,7 @@ extern "C" {
             if (ADLX_SUCCEEDED(res))
             {
                 IADLXGPUPtr oneGPU;
-                res = gpus->At(0, &oneGPU);
+                res = gpus->At(GPU, &oneGPU);
                 if (ADLX_SUCCEEDED(res) && oneGPU != nullptr)
                 {
                     adlx_bool supported = false;
@@ -1717,8 +1692,7 @@ extern "C" {
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
-                adlx_uint index = GPU;
-                res = gpus->At(index, &gpuInfo);
+                res = gpus->At(GPU, &gpuInfo);
                 if (ADLX_SUCCEEDED(res))
                 {
                     ADLX_RESULT res1 = perfMonitoringService->GetSupportedGPUMetrics(gpuInfo, &gpuMetricsSupport);
