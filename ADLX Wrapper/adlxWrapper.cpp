@@ -6,6 +6,13 @@
 #include "../SDK/Include/IGPUPresetTuning.h"
 #include "../SDK/Include/IGPUManualGFXTuning.h"
 #include "../SDK/Include/IPerformanceMonitoring.h"
+#include "../SDK/Include/IDisplays.h"
+#include "../SDK/Include/IDesktops.h"
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+using namespace std;
 
 #define ADLX_Wrapper _declspec(dllexport)
 
@@ -56,22 +63,208 @@ extern "C" {
         double gpuTotalBoardPowerValue;
     };
 
-    bool IntializeAdlx()
+    ADLX_Wrapper bool IntializeAdlx()
     {
         ADLX_RESULT res = ADLX_FAIL;
 
         // Initialize ADLX
         res = g_ADLXHelp.Initialize();
+
+        // Code to run when the DLL is loaded
+        if (ADLX_SUCCEEDED(res))
+        {
+#if DEBUG
+            AllocConsole();
+            freopen("CONOUT$", "w", stdout); // Redirect stdout to the console
+            freopen("CONOUT$", "w", stderr); // Optional: Redirect stderr to the console
+            std::ios::sync_with_stdio(); // Sync C++ and C standard streams
+#endif
+            cout << "ADLX Initialized" << endl;
+        }
+
         return ADLX_SUCCEEDED(res);
     }
 
-    bool CloseAdlx()
+    ADLX_Wrapper bool CloseAdlx()
     {
         ADLX_RESULT res = ADLX_FAIL;
 
         // Terminate ADLX
         res = g_ADLXHelp.Terminate();
+        if (ADLX_SUCCEEDED(res))
+        {
+            cout << "ADLX Terminated" << endl;
+        }
+
         return ADLX_SUCCEEDED(res);
+    }
+
+    ADLX_Wrapper ADLX_RESULT GetNumberOfDisplays(adlx_uint* displayNum)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+
+        // Get display service
+        IADLXDisplayServicesPtr displayService;
+        res = g_ADLXHelp.GetSystemServices()->GetDisplaysServices(&displayService);
+        if (ADLX_SUCCEEDED(res))
+        {
+            // Get display list
+            IADLXDisplayListPtr displayList;
+            res = displayService->GetDisplays(&displayList);
+            if (ADLX_SUCCEEDED(res) && !displayList->Empty())
+            {
+                *displayNum = displayList->Size();
+
+                cout << "======== GetNumberOfDisplays ========" << endl;
+                cout << "displayNum: " << displayNum << endl;
+            }
+        }
+
+        return res;
+    }
+
+    ADLX_Wrapper ADLX_RESULT GetDisplayName(adlx_uint index, char* Name, adlx_uint nameLength)
+    {
+        // Define return code
+        ADLX_RESULT res = ADLX_FAIL;
+
+        // Get display service
+        IADLXDisplayServicesPtr displayService;
+        res = g_ADLXHelp.GetSystemServices()->GetDisplaysServices(&displayService);
+        if (ADLX_SUCCEEDED(res))
+        {
+            // Get display list
+            IADLXDisplayListPtr displayList;
+            res = displayService->GetDisplays(&displayList);
+            if (ADLX_SUCCEEDED(res))
+            {
+                // Inspect for the first display in the list
+                IADLXDisplayPtr display;
+                res = displayList->At(index, &display);
+                if (ADLX_SUCCEEDED(res))
+                {
+                    cout << "======== GetDisplayName ========" << endl;
+
+                    const char* dispName;
+                    res = display->Name(&dispName);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        cout << "Display name: " << dispName << endl;
+
+                        // Make sure not to overflow the provided buffer
+                        strncpy(Name, dispName, nameLength);
+                        Name[nameLength - 1] = '\0'; // Ensure null-termination
+                    }
+
+                    adlx_uint manufacturerID;
+                    res = display->ManufacturerID(&manufacturerID);
+                    if (ADLX_SUCCEEDED(res))
+                        cout << "Manufacturer id: " << manufacturerID << endl;
+
+                    const char* edid;
+                    res = display->EDID(&edid);
+                    if (ADLX_SUCCEEDED(res))
+                        std::cout << "EDID: " << edid << std::endl;
+
+                    adlx_size id;
+                    res = display->UniqueId(&id);
+                    if (ADLX_SUCCEEDED(res))
+                        std::cout << "UniqueId: " << id << std::endl;
+                }
+            }
+        }
+
+        return res;
+    }
+
+    ADLX_Wrapper ADLX_RESULT GetNumberOfGPU(adlx_uint* gpuNum)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+
+        // Get GPUs
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            *gpuNum = gpus->Size();
+
+            cout << "======== GetNumberOfGPU ========" << endl;
+            cout << "displayNum: " << gpuNum << endl;
+        }
+
+        return res;
+    }
+
+    ADLX_Wrapper ADLX_RESULT GetDisplayGPU(adlx_uint index, adlx_int* uniqueId)
+    {
+        // Define return code
+        ADLX_RESULT res = ADLX_FAIL;
+
+        // Get display service
+        IADLXDisplayServicesPtr displayService;
+        res = g_ADLXHelp.GetSystemServices()->GetDisplaysServices(&displayService);
+        if (ADLX_SUCCEEDED(res))
+        {
+            // Get display list
+            IADLXDisplayListPtr displayList;
+            res = displayService->GetDisplays(&displayList);
+            if (ADLX_SUCCEEDED(res))
+            {
+                cout << "======== GetDisplayGPU ========" << endl;
+
+                // Inspect for the first display in the list
+                IADLXDisplayPtr display;
+                res = displayList->At(index, &display);
+                if (ADLX_SUCCEEDED(res))
+                {
+                    IADLXGPUPtr gpu;
+                    res = display->GetGPU(&gpu);
+
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        res = gpu->UniqueId(uniqueId);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            std::cout << "UniqueId: " << uniqueId << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
+    ADLX_Wrapper ADLX_RESULT GetGPUIndex(adlx_int uniqueId, adlx_uint* index)
+    {
+        // Define return code
+        ADLX_RESULT res = ADLX_FAIL;
+
+        // Get GPUs
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            for (int idx = 0; idx < gpus->Size(); idx++)
+            {
+                // Get GPU interface
+                IADLXGPUPtr gpuInfo;
+                res = gpus->At(idx, &gpuInfo);
+                if (ADLX_SUCCEEDED(res))
+                {
+                    adlx_int id;
+                    res = gpuInfo->UniqueId(&id);
+
+                    if (id == uniqueId)
+                    {
+                        *index = idx;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return res;
     }
 
     ADLX_Wrapper bool HasIntegerScalingSupport(int GPU)
