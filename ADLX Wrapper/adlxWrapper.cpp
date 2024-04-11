@@ -152,7 +152,8 @@ extern "C" {
                         cout << "Display name: " << dispName << endl;
 
                         // Make sure not to overflow the provided buffer
-                        strncpy_s(Name, nameLength, dispName, nameLength-1);
+                        strncpy(Name, dispName, nameLength);
+                        Name[nameLength - 1] = '\0'; // Ensure null-termination
                     }
 
                     adlx_uint manufacturerID;
