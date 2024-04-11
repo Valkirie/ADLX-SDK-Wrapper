@@ -20,7 +20,7 @@ extern "C" {
     using namespace adlx;
     static ADLXHelper g_ADLXHelp;
 
-    typedef struct AdlxTelemetryData
+    struct AdlxTelemetryData
     {
         // GPU Usage
         bool gpuUsageSupported = false;
@@ -138,7 +138,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position index in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(index, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -152,8 +152,7 @@ extern "C" {
                         cout << "Display name: " << dispName << endl;
 
                         // Make sure not to overflow the provided buffer
-                        strncpy(Name, dispName, nameLength);
-                        Name[nameLength - 1] = '\0'; // Ensure null-termination
+                        strncpy_s(Name, nameLength, dispName, nameLength-1);
                     }
 
                     adlx_uint manufacturerID;
@@ -189,7 +188,7 @@ extern "C" {
             *gpuNum = gpus->Size();
 
             cout << "======== GetNumberOfGPU ========" << endl;
-            cout << "displayNum: " << gpuNum << endl;
+            cout << "gpuNum: " << gpuNum << endl;
         }
 
         return res;
@@ -212,7 +211,7 @@ extern "C" {
             {
                 cout << "======== GetDisplayGPU ========" << endl;
 
-                // Inspect for the first display in the list
+                // Inspect for the display at position index in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(index, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -245,7 +244,7 @@ extern "C" {
         res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
         if (ADLX_SUCCEEDED(res) && !gpus->Empty())
         {
-            for (int idx = 0; idx < gpus->Size(); idx++)
+            for (adlx_uint idx = 0; idx < gpus->Size(); idx++)
             {
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
@@ -283,7 +282,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -319,7 +318,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -330,7 +329,7 @@ extern "C" {
                     {
                         adlx_bool enabled = false;
                         res = displayIntegerScaling->IsEnabled(&enabled);
-                        return enabled;
+                        result = enabled;
                     }
                 }
             }
@@ -355,7 +354,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -390,7 +389,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -426,7 +425,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -462,7 +461,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -497,7 +496,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -533,7 +532,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -569,7 +568,7 @@ extern "C" {
             res = displayService->GetDisplays(&displayList);
             if (ADLX_SUCCEEDED(res))
             {
-                // Inspect for the first display in the list
+                // Inspect for the display at position displayIdx in the list
                 IADLXDisplayPtr display;
                 res = displayList->At(displayIdx, &display);
                 if (ADLX_SUCCEEDED(res))
@@ -599,20 +598,14 @@ extern "C" {
         res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
         if (ADLX_SUCCEEDED(res))
         {
-            // Get 3DSettings service
-            IADLX3DSettingsServicesPtr d3dSettingSrv;
-            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            // Get RadeonSuperResolution interface
+            IADLX3DRadeonSuperResolutionPtr rsr;
+            res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
             if (ADLX_SUCCEEDED(res))
             {
-                // Get RadeonSuperResolution interface
-                IADLX3DRadeonSuperResolutionPtr rsr;
-                res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
-                if (ADLX_SUCCEEDED(res))
-                {
-                    adlx_bool supported = false;
-                    rsr->IsSupported(&supported);
-                    result = supported;
-                }
+                adlx_bool supported = false;
+                rsr->IsSupported(&supported);
+                result = supported;
             }
         }
 
@@ -630,25 +623,19 @@ extern "C" {
         res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
         if (ADLX_SUCCEEDED(res))
         {
-            // Get 3DSettings service
-            IADLX3DSettingsServicesPtr d3dSettingSrv;
-            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            // Get RadeonSuperResolution interface
+            IADLX3DRadeonSuperResolutionPtr rsr;
+            res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
             if (ADLX_SUCCEEDED(res))
             {
-                // Get RadeonSuperResolution interface
-                IADLX3DRadeonSuperResolutionPtr rsr;
-                res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
-                if (ADLX_SUCCEEDED(res))
-                {
-                    adlx_bool supported = false;
-                    rsr->IsSupported(&supported);
+                adlx_bool supported = false;
+                rsr->IsSupported(&supported);
 
-                    if (supported)
-                    {
-                        adlx_bool enabled = false;
-                        rsr->IsEnabled(&enabled);
-                        result = enabled;
-                    }
+                if (supported)
+                {
+                    adlx_bool enabled = false;
+                    rsr->IsEnabled(&enabled);
+                    result = enabled;
                 }
             }
         }
@@ -667,21 +654,18 @@ extern "C" {
         res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
         if (ADLX_SUCCEEDED(res))
         {
-            // Get 3DSettings service
-            IADLX3DSettingsServicesPtr d3dSettingSrv;
-            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            // Get RadeonSuperResolution interface
+            IADLX3DRadeonSuperResolutionPtr rsr;
+            res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
             if (ADLX_SUCCEEDED(res))
             {
-                if (ADLX_SUCCEEDED(res))
+                adlx_bool supported = false;
+                rsr->IsSupported(&supported);
+
+                if (supported)
                 {
-                    // Get RadeonSuperResolution interface
-                    IADLX3DRadeonSuperResolutionPtr rsr;
-                    res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
-                    if (ADLX_SUCCEEDED(res))
-                    {
-                        ADLX_RESULT res = rsr->SetEnabled(enable);
-                        result = ADLX_SUCCEEDED(res);
-                    }
+                    ADLX_RESULT res = rsr->SetEnabled(enable);
+                    result = ADLX_SUCCEEDED(res);
                 }
             }
         }
@@ -700,25 +684,19 @@ extern "C" {
         res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
         if (ADLX_SUCCEEDED(res))
         {
-            // Get 3DSettings service
-            IADLX3DSettingsServicesPtr d3dSettingSrv;
-            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            // Get RadeonSuperResolution interface
+            IADLX3DRadeonSuperResolutionPtr rsr;
+            res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
             if (ADLX_SUCCEEDED(res))
             {
-                // Get RadeonSuperResolution interface
-                IADLX3DRadeonSuperResolutionPtr rsr;
-                res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
-                if (ADLX_SUCCEEDED(res))
-                {
-                    adlx_bool supported = false;
-                    rsr->IsSupported(&supported);
+                adlx_bool supported = false;
+                rsr->IsSupported(&supported);
 
-                    if (supported)
-                    {
-                        adlx_int currentSharpness;
-                        rsr->GetSharpness(&currentSharpness);
-                        result = currentSharpness;
-                    }
+                if (supported)
+                {
+                    adlx_int currentSharpness;
+                    rsr->GetSharpness(&currentSharpness);
+                    result = currentSharpness;
                 }
             }
         }
@@ -737,24 +715,18 @@ extern "C" {
         res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
         if (ADLX_SUCCEEDED(res))
         {
-            // Get 3DSettings service
-            IADLX3DSettingsServicesPtr d3dSettingSrv;
-            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            // Get RadeonSuperResolution interface
+            IADLX3DRadeonSuperResolutionPtr rsr;
+            res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
             if (ADLX_SUCCEEDED(res))
             {
-                // Get RadeonSuperResolution interface
-                IADLX3DRadeonSuperResolutionPtr rsr;
-                res = d3dSettingSrv->GetRadeonSuperResolution(&rsr);
-                if (ADLX_SUCCEEDED(res))
-                {
-                    adlx_bool supported = false;
-                    rsr->IsSupported(&supported);
+                adlx_bool supported = false;
+                rsr->IsSupported(&supported);
 
-                    if (supported)
-                    {
-                        ADLX_RESULT adlx_result = rsr->SetSharpness(sharpness);
-                        result = ADLX_SUCCEEDED(adlx_result);
-                    }
+                if (supported)
+                {
+                    ADLX_RESULT adlx_result = rsr->SetSharpness(sharpness);
+                    result = ADLX_SUCCEEDED(adlx_result);
                 }
             }
         }
@@ -1359,6 +1331,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUUsage(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display GPU usage support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUUsage(&supported);
         if (ADLX_SUCCEEDED(res))
@@ -1502,6 +1475,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUClockSpeed(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display GPU clock speed support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUClockSpeed(&supported);
         if (ADLX_SUCCEEDED(res))
@@ -1521,6 +1495,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUVRAMClockSpeed(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display the GPU VRAM clock speed support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUVRAMClockSpeed(&supported);
         if (ADLX_SUCCEEDED(res))
@@ -1580,6 +1555,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUPower(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display GPU power support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUPower(&supported);
         if (ADLX_SUCCEEDED(res))
@@ -1599,6 +1575,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUTotalBoardPower(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display GPU total board power support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUTotalBoardPower(&supported);
         if (ADLX_SUCCEEDED(res))
@@ -1618,6 +1595,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUFanSpeed(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display GPU fan speed support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUFanSpeed(&supported);
         if (ADLX_SUCCEEDED(res))
@@ -1637,6 +1615,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUVRAM(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display GPU VRAM support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUVRAM(&supported);
         if (ADLX_SUCCEEDED(res))
@@ -1656,6 +1635,7 @@ extern "C" {
     ADLX_Wrapper void GetGPUVoltage(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
     {
         adlx_bool supported = false;
+
         // Display GPU voltage support status
         ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUVoltage(&supported);
         if (ADLX_SUCCEEDED(res))
