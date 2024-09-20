@@ -1285,6 +1285,9 @@ extern "C" {
             res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
             if (ADLX_SUCCEEDED(res))
             {
+                // Get 3DSettings service
+                IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
                 res = gpus->At(GPU, &gpuInfo);
@@ -1292,7 +1295,7 @@ extern "C" {
                 {
                     // Get Image Sharpening interface
                     IADLX3DImageSharpeningPtr sharp;
-                    res = d3dSettingSrv->GetImageSharpening(gpuInfo, &sharp);
+                    res = d3dSettingSrv1->GetImageSharpening(gpuInfo, &sharp);
                     if (ADLX_SUCCEEDED(res))
                     {
                         adlx_bool isEnabled;
@@ -1322,6 +1325,9 @@ extern "C" {
             res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
             if (ADLX_SUCCEEDED(res))
             {
+                // Get 3DSettings service
+                IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
                 res = gpus->At(GPU, &gpuInfo);
@@ -1329,7 +1335,7 @@ extern "C" {
                 {
                     // Get Image Sharpening interface
                     IADLX3DImageSharpeningPtr sharp;
-                    res = d3dSettingSrv->GetImageSharpening(gpuInfo, &sharp);
+                    res = d3dSettingSrv1->GetImageSharpening(gpuInfo, &sharp);
                     if (ADLX_SUCCEEDED(res))
                     {
                         ADLX_RESULT res = sharp->SetEnabled(enable);
@@ -1358,6 +1364,9 @@ extern "C" {
             res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
             if (ADLX_SUCCEEDED(res))
             {
+                // Get 3DSettings service
+                IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
                 res = gpus->At(GPU, &gpuInfo);
@@ -1365,7 +1374,7 @@ extern "C" {
                 {
                     // Get Image Sharpening interface
                     IADLX3DImageSharpeningPtr sharp;
-                    res = d3dSettingSrv->GetImageSharpening(gpuInfo, &sharp);
+                    res = d3dSettingSrv1->GetImageSharpening(gpuInfo, &sharp);
                     if (ADLX_SUCCEEDED(res))
                     {
                         adlx_int currentMaxFPS;
@@ -1395,6 +1404,9 @@ extern "C" {
             res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
             if (ADLX_SUCCEEDED(res))
             {
+                // Get 3DSettings service
+                IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+
                 // Get GPU interface
                 IADLXGPUPtr gpuInfo;
                 res = gpus->At(GPU, &gpuInfo);
@@ -1402,7 +1414,7 @@ extern "C" {
                 {
                     // Get Image Sharpening interface
                     IADLX3DImageSharpeningPtr sharp;
-                    res = d3dSettingSrv->GetImageSharpening(gpuInfo, &sharp);
+                    res = d3dSettingSrv1->GetImageSharpening(gpuInfo, &sharp);
                     if (ADLX_SUCCEEDED(res))
                     {
                         ADLX_RESULT res = sharp->SetSharpness(sharpness);
