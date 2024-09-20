@@ -1,5 +1,6 @@
 #include "../SDK/ADLXHelper/Windows/Cpp/ADLXHelper.h"
 #include "../SDK/Include/I3DSettings.h"
+#include "../SDK/Include/I3DSettings1.h"
 #include "../SDK/Include/IDisplaySettings.h"
 #include "../SDK/Include/IDisplays.h"
 #include "../SDK/Include/IGPUTuning.h"
@@ -581,6 +582,101 @@ extern "C" {
                         ADLX_RESULT res = scalingMode->SetMode((ADLX_SCALE_MODE)mode);
                         result = ADLX_SUCCEEDED(res);
                     }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool HasAFMFSupport()
+    {
+        // Define return code
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        // Get 3DSettings service
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            // Get 3DSettings service
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+
+            // Get AFMF interface
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                adlx_bool supported = false;
+                d3dAFMF->IsSupported(&supported);
+                result = supported;
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool GetAFMF()
+    {
+        // Define return code
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        // Get 3DSettings service
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            // Get 3DSettings service
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+
+            // Get AFMF interface
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                adlx_bool supported = false;
+                d3dAFMF->IsSupported(&supported);
+
+                if (supported)
+                {
+                    adlx_bool enabled = false;
+                    d3dAFMF->IsEnabled(&enabled);
+                    result = enabled;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetAFMF(bool enable)
+    {
+        // Define return code
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        // Get 3DSettings service
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            // Get 3DSettings service
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+
+            // Get AFMF interface
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                adlx_bool supported = false;
+                d3dAFMF->IsSupported(&supported);
+
+                if (supported)
+                {
+                    ADLX_RESULT res = d3dAFMF->SetEnabled(enable);
+                    result = ADLX_SUCCEEDED(res);
                 }
             }
         }
