@@ -68,19 +68,26 @@ extern "C" {
     {
         ADLX_RESULT res = ADLX_FAIL;
 
-        // Initialize ADLX
-        res = g_ADLXHelp.Initialize();
-
-        // Code to run when the DLL is loaded
-        if (ADLX_SUCCEEDED(res))
+        try
         {
+            // Initialize ADLX
+            res = g_ADLXHelp.Initialize();
+
+            // Code to run when the DLL is loaded
+            if (ADLX_SUCCEEDED(res))
+            {
 #if DEBUG
-            AllocConsole();
-            freopen("CONOUT$", "w", stdout); // Redirect stdout to the console
-            freopen("CONOUT$", "w", stderr); // Optional: Redirect stderr to the console
-            std::ios::sync_with_stdio(); // Sync C++ and C standard streams
+                AllocConsole();
+                freopen("CONOUT$", "w", stdout); // Redirect stdout to the console
+                freopen("CONOUT$", "w", stderr); // Optional: Redirect stderr to the console
+                std::ios::sync_with_stdio(); // Sync C++ and C standard streams
 #endif
-            cout << "ADLX Initialized" << endl;
+                cout << "ADLX Initialized" << endl;
+            }
+        }
+        catch (const std::exception& e)
+        {
+            // Handle and log errors
         }
 
         return ADLX_SUCCEEDED(res);
