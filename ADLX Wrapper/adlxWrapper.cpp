@@ -64,7 +64,7 @@ extern "C" {
         double gpuTotalBoardPowerValue;
     };
 
-    ADLX_Wrapper bool IntializeAdlx()
+    ADLX_Wrapper bool IntializeAdlx(char* adlxVersion, adlx_uint nameLength)
     {
         ADLX_RESULT res = ADLX_FAIL;
 
@@ -76,6 +76,12 @@ extern "C" {
             // Code to run when the DLL is loaded
             if (ADLX_SUCCEEDED(res))
             {
+                const char* dispName;
+                dispName = g_ADLXHelp.QueryVersion();
+
+                // Make sure not to overflow the provided buffer
+                strncpy(adlxVersion, dispName, nameLength);
+                adlxVersion[nameLength - 1] = '\0'; // Ensure null-termination
 #if DEBUG
                 AllocConsole();
                 freopen("CONOUT$", "w", stdout); // Redirect stdout to the console
@@ -87,7 +93,11 @@ extern "C" {
         }
         catch (const std::exception& e)
         {
-            // Handle and log errors
+            g_ADLXHelp.Terminate();
+        }
+        catch (...)
+        {
+            g_ADLXHelp.Terminate();
         }
 
         return ADLX_SUCCEEDED(res);
