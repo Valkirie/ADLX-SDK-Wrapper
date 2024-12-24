@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ADLX_Probe")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d15b5daf87132ab12dccb52b5743e46ab04ad50b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+176cf611625f8a0abb9e311a7d7fa4e9df1a2637")]
 [assembly: System.Reflection.AssemblyProductAttribute("ADLX_Probe")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ADLX_Probe")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

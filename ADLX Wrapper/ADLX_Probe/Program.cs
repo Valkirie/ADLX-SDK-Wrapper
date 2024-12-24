@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
+using Timer = System.Timers.Timer;
 
 namespace ADLX_Probe
 {
@@ -10,20 +11,24 @@ namespace ADLX_Probe
         [DllImport(ADLX_Wrapper, CallingConvention = CallingConvention.Cdecl)] private static extern bool InitializeAdlxWithIncompatibleDriver();
         [DllImport(ADLX_Wrapper, CallingConvention = CallingConvention.Cdecl)] public static extern bool CloseAdlx();
 
+        static StringBuilder displayName = new StringBuilder(256);
         static void Main()
         {
-            try
-            {
-                StringBuilder displayName = new StringBuilder(256); // Assume display name won't exceed 255 characters
-                if (IntializeAdlx(displayName, displayName.Capacity))
-                {
-                    CloseAdlx();
-                    Environment.Exit(0); // Success
-                }
-            }
-            catch { }
+            Timer UpdateTimer = new Timer(1000);
+            UpdateTimer.Elapsed += UpdateTimer_Elapsed;
+            UpdateTimer.Start();
 
-            Environment.Exit(1); // Error
+            // try
+            IntializeAdlx(displayName, displayName.Capacity);
+
+            while(true)
+                Thread.Sleep(1000);
+        }
+
+        private static void UpdateTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+        {
+            Console.WriteLine(displayName.ToString());
+            Environment.Exit(2); // Success
         }
     }
 }
