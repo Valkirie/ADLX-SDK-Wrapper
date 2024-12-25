@@ -103,6 +103,45 @@ extern "C" {
         return ADLX_SUCCEEDED(res);
     }
 
+    ADLX_Wrapper bool InitializeWithIncompatibleDriver(char* adlxVersion, adlx_uint nameLength)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+
+        try
+        {
+            // Initialize ADLX
+            res = g_ADLXHelp.InitializeWithIncompatibleDriver();
+
+            // Code to run when the DLL is loaded
+            if (ADLX_SUCCEEDED(res))
+            {
+                const char* dispName;
+                dispName = g_ADLXHelp.QueryVersion();
+
+                // Make sure not to overflow the provided buffer
+                strncpy(adlxVersion, dispName, nameLength);
+                adlxVersion[nameLength - 1] = '\0'; // Ensure null-termination
+#if DEBUG
+                AllocConsole();
+                freopen("CONOUT$", "w", stdout); // Redirect stdout to the console
+                freopen("CONOUT$", "w", stderr); // Optional: Redirect stderr to the console
+                std::ios::sync_with_stdio(); // Sync C++ and C standard streams
+#endif
+                cout << "ADLX Initialized" << endl;
+            }
+        }
+        catch (const std::exception& e)
+        {
+            g_ADLXHelp.Terminate();
+        }
+        catch (...)
+        {
+            g_ADLXHelp.Terminate();
+        }
+
+        return ADLX_SUCCEEDED(res);
+    }
+
     ADLX_Wrapper bool CloseAdlx()
     {
         ADLX_RESULT res = ADLX_FAIL;
