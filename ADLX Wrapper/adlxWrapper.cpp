@@ -62,6 +62,10 @@ extern "C" {
         // GPU TBP
         bool gpuTotalBoardPowerSupported = false;
         double gpuTotalBoardPowerValue;
+
+        // Framerate
+        long timeStamp = 0;
+        int fpsData = 0;
     };
 
     ADLX_Wrapper bool IntializeAdlx(char* adlxVersion, adlx_uint nameLength)
@@ -1776,6 +1780,34 @@ extern "C" {
             }
         }
     }
+
+    ADLX_Wrapper void GetGPUFramerate(IADLXPerformanceMonitoringServicesPtr perfMonitoringServices, AdlxTelemetryData* telemetryData)
+    {
+        IADLXFPSPtr oneFPS;
+
+        // Get current FPS metrics
+        ADLX_RESULT res = perfMonitoringServices->GetCurrentFPS(&oneFPS);
+        if (ADLX_SUCCEEDED(res))
+        {
+            adlx_int64 timeStamp = 0;
+            res = oneFPS->TimeStamp(&timeStamp);
+            if (ADLX_SUCCEEDED(res))
+            {
+                telemetryData->timeStamp = timeStamp;
+                std::cout << "The current metric time stamp is: " << timeStamp << "ms\n";
+            }
+
+            adlx_int fpsData = 0;
+            res = oneFPS->FPS(&fpsData);
+            if (ADLX_SUCCEEDED(res))
+            {
+                telemetryData->fpsData = fpsData;
+                std::cout << "The current metric FPS is: " << fpsData << std::endl;
+            }
+            else if (res == ADLX_NOT_SUPPORTED)
+                std::cout << "Don't support FPS" << std::endl;
+        }
+    }
     
     ADLX_Wrapper bool GetAdlxTelemetry(int GPU, AdlxTelemetryData* adlxTelemetryData)
     {
@@ -1788,7 +1820,7 @@ extern "C" {
         IADLXPerformanceMonitoringServicesPtr perfMonitoringService;
 
         // Get Performance Monitoring services
-         res = g_ADLXHelp.GetSystemServices()->GetPerformanceMonitoringServices(&perfMonitoringService);
+        res = g_ADLXHelp.GetSystemServices()->GetPerformanceMonitoringServices(&perfMonitoringService);
         if (ADLX_SUCCEEDED(res))
         {
             // Get GPUs
@@ -1804,9 +1836,11 @@ extern "C" {
                     ADLX_RESULT res1 = perfMonitoringService->GetSupportedGPUMetrics(gpuInfo, &gpuMetricsSupport);
                     ADLX_RESULT res2 = perfMonitoringService->GetCurrentGPUMetrics(gpuInfo, &gpuMetrics);
 
-                    // Display timestamp and GPU metrics
                     if (ADLX_SUCCEEDED(res1) && ADLX_SUCCEEDED(res2))
                     {
+                        // Acquire the interface
+                        gpuMetrics->Acquire();
+
                         GetTimeStamp(gpuMetrics);
                         GetGPUUsage(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
                         GetGPUClockSpeed(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
@@ -1818,6 +1852,10 @@ extern "C" {
                         GetGPUVRAM(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
                         GetGPUVoltage(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
                         GetGPUTotalBoardPower(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
+                        GetGPUFramerate(perfMonitoringService, adlxTelemetryData);
+
+                        // Release the interface
+                        gpuMetrics->Release();
 
                         check = true;
                     }
