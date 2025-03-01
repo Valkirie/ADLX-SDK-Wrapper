@@ -37,6 +37,9 @@ namespace ADLX_Probe
             if (sender is Timer timer)
                 timer.Stop();
 
+            // close ADLX
+            CloseAdlx();
+
             Console.WriteLine(ADLXVersion.ToString());
             Environment.Exit(2); // Success
         }
