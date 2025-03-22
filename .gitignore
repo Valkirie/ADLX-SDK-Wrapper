@@ -2,3 +2,7 @@
 */out/*
 */build/*
 /Samples/*
+*/bin/*
+*/obj/*
+/ADLX Wrapper/ADLX_Probe/bin
+/ADLX Wrapper/ADLX_Probe/obj
