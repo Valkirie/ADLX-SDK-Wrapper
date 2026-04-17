@@ -2629,8 +2629,13 @@ extern "C" {
                         res = d3dSettingSrv3->GetFidelityFXFrameGenUpgrade(gpuInfo, &ffxFG);
                         if (ADLX_SUCCEEDED(res))
                         {
-                            res = ffxFG->SetRatio((ADLX_FFX_FRAME_GEN_RATIO)ratio);
-                            result = ADLX_SUCCEEDED(res);
+                            adlx_bool supported = false;
+                            ffxFG->IsSupported(&supported);
+                            if (supported)
+                            {
+                                res = ffxFG->SetRatio((ADLX_FFX_FRAME_GEN_RATIO)ratio);
+                                result = ADLX_SUCCEEDED(res);
+                            }
                         }
                     }
                 }
