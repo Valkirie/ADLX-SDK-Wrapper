@@ -1,6 +1,9 @@
 #include "../SDK/ADLXHelper/Windows/Cpp/ADLXHelper.h"
 #include "../SDK/Include/I3DSettings.h"
 #include "../SDK/Include/I3DSettings1.h"
+#include "../SDK/Include/I3DSettings2.h"
+#include "../SDK/Include/I3DSettings3.h"
+#include "../SDK/Include/IPerformanceMonitoring3.h"
 #include "../SDK/Include/IDisplaySettings.h"
 #include "../SDK/Include/IDisplays.h"
 #include "../SDK/Include/IGPUTuning.h"
@@ -63,6 +66,14 @@ extern "C" {
         bool gpuTotalBoardPowerSupported = false;
         double gpuTotalBoardPowerValue;
 
+        // GPU Fan Duty
+        bool gpuFanDutySupported = false;
+        double gpuFanDutyValue;
+
+        // GPU Shared Memory
+        bool gpuSharedMemorySupported = false;
+        double gpuSharedMemoryValue;
+
         // Framerate
         long timeStamp = 0;
         int fpsData = 0;
@@ -72,6 +83,9 @@ extern "C" {
     {
         ADLX_RESULT res = ADLX_FAIL;
 
+        if (adlxVersion == nullptr || nameLength == 0)
+            return false;
+
         try
         {
             // Initialize ADLX
@@ -80,12 +94,18 @@ extern "C" {
             // Code to run when the DLL is loaded
             if (ADLX_SUCCEEDED(res))
             {
-                const char* dispName;
-                dispName = g_ADLXHelp.QueryVersion();
+                const char* dispName = g_ADLXHelp.QueryVersion();
 
                 // Make sure not to overflow the provided buffer
-                strncpy(adlxVersion, dispName, nameLength);
-                adlxVersion[nameLength - 1] = '\0'; // Ensure null-termination
+                if (dispName != nullptr)
+                {
+                    strncpy(adlxVersion, dispName, nameLength);
+                    adlxVersion[nameLength - 1] = '\0'; // Ensure null-termination
+                }
+                else
+                {
+                    adlxVersion[0] = '\0';
+                }
 #if DEBUG
                 AllocConsole();
                 freopen("CONOUT$", "w", stdout); // Redirect stdout to the console
@@ -111,6 +131,9 @@ extern "C" {
     {
         ADLX_RESULT res = ADLX_FAIL;
 
+        if (adlxVersion == nullptr || nameLength == 0)
+            return false;
+
         try
         {
             // Initialize ADLX
@@ -119,12 +142,18 @@ extern "C" {
             // Code to run when the DLL is loaded
             if (ADLX_SUCCEEDED(res))
             {
-                const char* dispName;
-                dispName = g_ADLXHelp.QueryVersion();
+                const char* dispName = g_ADLXHelp.QueryVersion();
 
                 // Make sure not to overflow the provided buffer
-                strncpy(adlxVersion, dispName, nameLength);
-                adlxVersion[nameLength - 1] = '\0'; // Ensure null-termination
+                if (dispName != nullptr)
+                {
+                    strncpy(adlxVersion, dispName, nameLength);
+                    adlxVersion[nameLength - 1] = '\0'; // Ensure null-termination
+                }
+                else
+                {
+                    adlxVersion[0] = '\0';
+                }
 #if DEBUG
                 AllocConsole();
                 freopen("CONOUT$", "w", stdout); // Redirect stdout to the console
@@ -744,6 +773,249 @@ extern "C" {
         return result;
     }
 
+    ADLX_Wrapper bool GetAFMFAlgorithmSupport()
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    adlx_bool supported = false;
+                    d3dAFMF1->IsSupportedAlgorithm(&supported);
+                    result = supported;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper int GetAFMFAlgorithm()
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        int result = -1;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    ADLX_AFMF_ALGORITHM algorithm;
+                    res = d3dAFMF1->GetAlgorithm(&algorithm);
+                    if (ADLX_SUCCEEDED(res))
+                        result = algorithm;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetAFMFAlgorithm(int algorithm)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    res = d3dAFMF1->SetAlgorithm((ADLX_AFMF_ALGORITHM)algorithm);
+                    result = ADLX_SUCCEEDED(res);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper int GetAFMFSearchMode()
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        int result = -1;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    ADLX_AFMF_SEARCH_MODE_TYPE mode;
+                    res = d3dAFMF1->GetSearchMode(&mode);
+                    if (ADLX_SUCCEEDED(res))
+                        result = mode;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetAFMFSearchMode(int mode)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    res = d3dAFMF1->SetSearchMode((ADLX_AFMF_SEARCH_MODE_TYPE)mode);
+                    result = ADLX_SUCCEEDED(res);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper int GetAFMFPerformanceMode()
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        int result = -1;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    ADLX_AFMF_PERFORMANCE_MODE_TYPE perfMode;
+                    res = d3dAFMF1->GetPerformanceMode(&perfMode);
+                    if (ADLX_SUCCEEDED(res))
+                        result = perfMode;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetAFMFPerformanceMode(int mode)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    res = d3dAFMF1->SetPerformanceMode((ADLX_AFMF_PERFORMANCE_MODE_TYPE)mode);
+                    result = ADLX_SUCCEEDED(res);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper int GetAFMFFastMotionResponse()
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        int result = -1;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    ADLX_AFMF_FAST_MOTION_RESP response;
+                    res = d3dAFMF1->GetFastMotionResponse(&response);
+                    if (ADLX_SUCCEEDED(res))
+                        result = response;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetAFMFFastMotionResponse(int response)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLX3DSettingsServicesPtr d3dSettingSrv;
+        res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLX3DSettingsServices1Ptr d3dSettingSrv1(d3dSettingSrv);
+            IADLX3DAMDFluidMotionFramesPtr d3dAFMF;
+            res = d3dSettingSrv1->GetAMDFluidMotionFrames(&d3dAFMF);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DAMDFluidMotionFrames1Ptr d3dAFMF1(d3dAFMF);
+                if (d3dAFMF1 != nullptr)
+                {
+                    res = d3dAFMF1->SetFastMotionResponse((ADLX_AFMF_FAST_MOTION_RESP)response);
+                    result = ADLX_SUCCEEDED(res);
+                }
+            }
+        }
+
+        return result;
+    }
+
     ADLX_Wrapper bool HasRSRSupport()
     {
         // Define return code
@@ -884,6 +1156,113 @@ extern "C" {
                 {
                     ADLX_RESULT adlx_result = rsr->SetSharpness(sharpness);
                     result = ADLX_SUCCEEDED(adlx_result);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool HasSharpenDesktopSupport(int GPU)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices2Ptr d3dSettingSrv2(d3dSettingSrv);
+                if (d3dSettingSrv2 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DImageSharpenDesktopPtr sharpenDesktop;
+                        res = d3dSettingSrv2->GetImageSharpenDesktop(gpuInfo, &sharpenDesktop);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool supported = false;
+                            sharpenDesktop->IsSupported(&supported);
+                            result = supported;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool GetSharpenDesktop(int GPU)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices2Ptr d3dSettingSrv2(d3dSettingSrv);
+                if (d3dSettingSrv2 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DImageSharpenDesktopPtr sharpenDesktop;
+                        res = d3dSettingSrv2->GetImageSharpenDesktop(gpuInfo, &sharpenDesktop);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool enabled = false;
+                            res = sharpenDesktop->IsEnabled(&enabled);
+                            result = enabled;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetSharpenDesktop(int GPU, bool enable)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices2Ptr d3dSettingSrv2(d3dSettingSrv);
+                if (d3dSettingSrv2 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DImageSharpenDesktopPtr sharpenDesktop;
+                        res = d3dSettingSrv2->GetImageSharpenDesktop(gpuInfo, &sharpenDesktop);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            res = sharpenDesktop->SetEnabled(enable);
+                            result = ADLX_SUCCEEDED(res);
+                        }
+                    }
                 }
             }
         }
@@ -1820,6 +2199,54 @@ extern "C" {
         }
     }
 
+    // GPU Fan Duty (in %)
+    ADLX_Wrapper void GetGPUFanDuty(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    {
+        IADLXGPUMetricsSupport3Ptr gpuMetricsSupport3(gpuMetricsSupport);
+        IADLXGPUMetrics3Ptr gpuMetrics3(gpuMetrics);
+
+        if (gpuMetricsSupport3 == nullptr || gpuMetrics3 == nullptr)
+            return;
+
+        adlx_bool supported = false;
+        ADLX_RESULT res = gpuMetricsSupport3->IsSupportedGPUFanDuty(&supported);
+        if (ADLX_SUCCEEDED(res))
+        {
+            telemetryData->gpuFanDutySupported = supported;
+            if (supported)
+            {
+                adlx_int fanDuty = 0;
+                res = gpuMetrics3->GPUFanDuty(&fanDuty);
+                if (ADLX_SUCCEEDED(res))
+                    telemetryData->gpuFanDutyValue = fanDuty;
+            }
+        }
+    }
+
+    // GPU Shared Memory (in MB)
+    ADLX_Wrapper void GetGPUSharedMemory(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    {
+        IADLXGPUMetricsSupport2Ptr gpuMetricsSupport2(gpuMetricsSupport);
+        IADLXGPUMetrics2Ptr gpuMetrics2(gpuMetrics);
+
+        if (gpuMetricsSupport2 == nullptr || gpuMetrics2 == nullptr)
+            return;
+
+        adlx_bool supported = false;
+        ADLX_RESULT res = gpuMetricsSupport2->IsSupportedGPUSharedMemory(&supported);
+        if (ADLX_SUCCEEDED(res))
+        {
+            telemetryData->gpuSharedMemorySupported = supported;
+            if (supported)
+            {
+                adlx_int sharedMemory = 0;
+                res = gpuMetrics2->GPUSharedMemory(&sharedMemory);
+                if (ADLX_SUCCEEDED(res))
+                    telemetryData->gpuSharedMemoryValue = sharedMemory;
+            }
+        }
+    }
+
     ADLX_Wrapper void GetGPUFramerate(IADLXPerformanceMonitoringServicesPtr perfMonitoringServices, AdlxTelemetryData* telemetryData)
     {
         IADLXFPSPtr oneFPS;
@@ -1891,6 +2318,8 @@ extern "C" {
                         GetGPUVRAM(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
                         GetGPUVoltage(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
                         GetGPUTotalBoardPower(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
+                        GetGPUFanDuty(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
+                        GetGPUSharedMemory(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
                         GetGPUFramerate(perfMonitoringService, adlxTelemetryData);
 
                         // Release the interface
@@ -1903,5 +2332,311 @@ extern "C" {
         }
 
         return check;
+    }
+
+    ADLX_Wrapper bool HasFSRSupport(int GPU)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXSuperResolutionPtr fsr;
+                        res = d3dSettingSrv3->GetFidelityFXSuperResolution(gpuInfo, &fsr);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool supported = false;
+                            fsr->IsSupported(&supported);
+                            result = supported;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool GetFSR(int GPU)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXSuperResolutionPtr fsr;
+                        res = d3dSettingSrv3->GetFidelityFXSuperResolution(gpuInfo, &fsr);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool supported = false;
+                            fsr->IsSupported(&supported);
+                            if (supported)
+                            {
+                                adlx_bool enabled = false;
+                                fsr->IsEnabled(&enabled);
+                                result = enabled;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetFSR(int GPU, bool enable)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXSuperResolutionPtr fsr;
+                        res = d3dSettingSrv3->GetFidelityFXSuperResolution(gpuInfo, &fsr);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool supported = false;
+                            fsr->IsSupported(&supported);
+                            if (supported)
+                            {
+                                res = fsr->SetEnabled(enable);
+                                result = ADLX_SUCCEEDED(res);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool HasFFXFrameGenSupport(int GPU)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXFrameGenUpgradePtr ffxFG;
+                        res = d3dSettingSrv3->GetFidelityFXFrameGenUpgrade(gpuInfo, &ffxFG);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool supported = false;
+                            ffxFG->IsSupported(&supported);
+                            result = supported;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool GetFFXFrameGen(int GPU)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXFrameGenUpgradePtr ffxFG;
+                        res = d3dSettingSrv3->GetFidelityFXFrameGenUpgrade(gpuInfo, &ffxFG);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool supported = false;
+                            ffxFG->IsSupported(&supported);
+                            if (supported)
+                            {
+                                adlx_bool enabled = false;
+                                ffxFG->IsEnabled(&enabled);
+                                result = enabled;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetFFXFrameGen(int GPU, bool enable)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXFrameGenUpgradePtr ffxFG;
+                        res = d3dSettingSrv3->GetFidelityFXFrameGenUpgrade(gpuInfo, &ffxFG);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            adlx_bool supported = false;
+                            ffxFG->IsSupported(&supported);
+                            if (supported)
+                            {
+                                res = ffxFG->SetEnabled(enable);
+                                result = ADLX_SUCCEEDED(res);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper int GetFFXFrameGenRatio(int GPU)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        int result = -1;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXFrameGenUpgradePtr ffxFG;
+                        res = d3dSettingSrv3->GetFidelityFXFrameGenUpgrade(gpuInfo, &ffxFG);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            ADLX_FFX_FRAME_GEN_RATIO ratio;
+                            res = ffxFG->GetRatio(&ratio);
+                            if (ADLX_SUCCEEDED(res))
+                                result = ratio;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ADLX_Wrapper bool SetFFXFrameGenRatio(int GPU, int ratio)
+    {
+        ADLX_RESULT res = ADLX_FAIL;
+        bool result = false;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res) && !gpus->Empty())
+        {
+            IADLX3DSettingsServicesPtr d3dSettingSrv;
+            res = g_ADLXHelp.GetSystemServices()->Get3DSettingsServices(&d3dSettingSrv);
+            if (ADLX_SUCCEEDED(res))
+            {
+                IADLX3DSettingsServices3Ptr d3dSettingSrv3(d3dSettingSrv);
+                if (d3dSettingSrv3 != nullptr)
+                {
+                    IADLXGPUPtr gpuInfo;
+                    res = gpus->At(GPU, &gpuInfo);
+                    if (ADLX_SUCCEEDED(res))
+                    {
+                        IADLX3DFidelityFXFrameGenUpgradePtr ffxFG;
+                        res = d3dSettingSrv3->GetFidelityFXFrameGenUpgrade(gpuInfo, &ffxFG);
+                        if (ADLX_SUCCEEDED(res))
+                        {
+                            res = ffxFG->SetRatio((ADLX_FFX_FRAME_GEN_RATIO)ratio);
+                            result = ADLX_SUCCEEDED(res);
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 }
