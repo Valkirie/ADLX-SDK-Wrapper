@@ -66,6 +66,22 @@ extern "C" {
         bool gpuTotalBoardPowerSupported = false;
         double gpuTotalBoardPowerValue;
 
+        // GPU Intake Temperature
+        bool gpuIntakeTemperatureSupported = false;
+        double gpuIntakeTemperatureValue;
+
+        // GPU Memory Temperature
+        bool gpuMemoryTemperatureSupported = false;
+        double gpuMemoryTemperatureValue;
+
+        // NPU Frequency
+        bool npuFrequencySupported = false;
+        double npuFrequencyValue;
+
+        // NPU Activity
+        bool npuActivitySupported = false;
+        double npuActivityValue;
+
         // GPU Fan Duty
         bool gpuFanDutySupported = false;
         double gpuFanDutyValue;
@@ -78,6 +94,49 @@ extern "C" {
         long timeStamp = 0;
         int fpsData = 0;
     };
+
+    struct AdlxTelemetryInterfaces
+    {
+        IADLXGPUMetricsSupportPtr gpuMetricsSupport;
+        IADLXGPUMetricsSupport1Ptr gpuMetricsSupport1;
+        IADLXGPUMetricsSupport2Ptr gpuMetricsSupport2;
+        IADLXGPUMetricsSupport3Ptr gpuMetricsSupport3;
+        IADLXGPUMetricsPtr gpuMetrics;
+        IADLXGPUMetrics1Ptr gpuMetrics1;
+        IADLXGPUMetrics2Ptr gpuMetrics2;
+        IADLXGPUMetrics3Ptr gpuMetrics3;
+        adlx_uint gpuMetricsSupportVersion = 0;
+        adlx_uint gpuMetricsVersion = 0;
+    };
+
+    ADLX_Wrapper void ResolveTelemetryInterfaces(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryInterfaces* telemetryInterfaces)
+    {
+        if (telemetryInterfaces == nullptr)
+            return;
+
+        telemetryInterfaces->gpuMetricsSupport = gpuMetricsSupport;
+        telemetryInterfaces->gpuMetricsSupport1 = IADLXGPUMetricsSupport1Ptr(gpuMetricsSupport);
+        telemetryInterfaces->gpuMetricsSupport2 = IADLXGPUMetricsSupport2Ptr(gpuMetricsSupport);
+        telemetryInterfaces->gpuMetricsSupport3 = IADLXGPUMetricsSupport3Ptr(gpuMetricsSupport);
+        telemetryInterfaces->gpuMetrics = gpuMetrics;
+        telemetryInterfaces->gpuMetrics1 = IADLXGPUMetrics1Ptr(gpuMetrics);
+        telemetryInterfaces->gpuMetrics2 = IADLXGPUMetrics2Ptr(gpuMetrics);
+        telemetryInterfaces->gpuMetrics3 = IADLXGPUMetrics3Ptr(gpuMetrics);
+
+        if (telemetryInterfaces->gpuMetricsSupport3 != nullptr)
+            telemetryInterfaces->gpuMetricsSupportVersion = 3;
+        else if (telemetryInterfaces->gpuMetricsSupport2 != nullptr)
+            telemetryInterfaces->gpuMetricsSupportVersion = 2;
+        else if (telemetryInterfaces->gpuMetricsSupport1 != nullptr)
+            telemetryInterfaces->gpuMetricsSupportVersion = 1;
+
+        if (telemetryInterfaces->gpuMetrics3 != nullptr)
+            telemetryInterfaces->gpuMetricsVersion = 3;
+        else if (telemetryInterfaces->gpuMetrics2 != nullptr)
+            telemetryInterfaces->gpuMetricsVersion = 2;
+        else if (telemetryInterfaces->gpuMetrics1 != nullptr)
+            telemetryInterfaces->gpuMetricsVersion = 1;
+    }
 
     ADLX_Wrapper bool IntializeAdlx(char* adlxVersion, adlx_uint nameLength)
     {
@@ -1866,29 +1925,35 @@ extern "C" {
         return result;
     }
 
-    ADLX_Wrapper bool GetTimeStamp(IADLXGPUMetricsPtr gpuMetrics)
+    ADLX_Wrapper bool GetTimeStamp(const AdlxTelemetryInterfaces& telemetryInterfaces)
     {
         ADLX_RESULT res = ADLX_FAIL;
         adlx_int64 timeStamp = 0;
 
-        res = gpuMetrics->TimeStamp(&timeStamp);
+        if (telemetryInterfaces.gpuMetrics == nullptr)
+            return false;
+
+        res = telemetryInterfaces.gpuMetrics->TimeStamp(&timeStamp);
         return ADLX_SUCCEEDED(res);
     }
     
     // Set GPU usage (in %)
-    ADLX_Wrapper void GetGPUUsage(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUUsage(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU usage support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUUsage(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUUsage(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuUsageSupported = supported;
             if (supported)
             {
                 adlx_double usage = 0;
-                res = gpuMetrics->GPUUsage(&usage);
+                res = telemetryInterfaces.gpuMetrics->GPUUsage(&usage);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuUsageValue = usage;
             }
@@ -2020,19 +2085,22 @@ extern "C" {
     }
 
     // Set GPU clock speed (in MHz)
-    ADLX_Wrapper void GetGPUClockSpeed(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUClockSpeed(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU clock speed support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUClockSpeed(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUClockSpeed(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuClockSpeedSupported = supported;
             if (supported)
             {
                 adlx_int gpuClock = 0;
-                res = gpuMetrics->GPUClockSpeed(&gpuClock);
+                res = telemetryInterfaces.gpuMetrics->GPUClockSpeed(&gpuClock);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuClockSpeedValue = gpuClock;
             }
@@ -2040,19 +2108,22 @@ extern "C" {
     }
 
     // Set GPU VRAM clock speed (in MHz)
-    ADLX_Wrapper void GetGPUVRAMClockSpeed(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUVRAMClockSpeed(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display the GPU VRAM clock speed support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUVRAMClockSpeed(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUVRAMClockSpeed(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuVRAMClockSpeedSupported = supported;
             if (supported)
             {
                 adlx_int memoryClock = 0;
-                res = gpuMetrics->GPUVRAMClockSpeed(&memoryClock);
+                res = telemetryInterfaces.gpuMetrics->GPUVRAMClockSpeed(&memoryClock);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuVRAMClockSpeedValue = memoryClock;
             }
@@ -2060,19 +2131,22 @@ extern "C" {
     }
 
     // Set GPU temperature(in °C)
-    ADLX_Wrapper void GetGPUTemperature(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUTemperature(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display the GPU temperature support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUTemperature(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUTemperature(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuTemperatureSupported = supported;
             if (supported)
             {
                 adlx_double temperature = 0;
-                res = gpuMetrics->GPUTemperature(&temperature);
+                res = telemetryInterfaces.gpuMetrics->GPUTemperature(&temperature);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuTemperatureValue = temperature;
             }
@@ -2080,19 +2154,22 @@ extern "C" {
     }
 
     // Set GPU hotspot temperature(in °C)
-    ADLX_Wrapper void GetGPUHotspotTemperature(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUHotspotTemperature(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU hotspot temperature support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUHotspotTemperature(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUHotspotTemperature(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuHotspotTemperatureSupported = supported;
             if (supported)
             {
                 adlx_double hotspotTemperature = 0;
-                res = gpuMetrics->GPUHotspotTemperature(&hotspotTemperature);
+                res = telemetryInterfaces.gpuMetrics->GPUHotspotTemperature(&hotspotTemperature);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuHotspotTemperatureValue = hotspotTemperature;
             }
@@ -2100,19 +2177,22 @@ extern "C" {
     }
 
     // Set GPU power(in W)
-    ADLX_Wrapper void GetGPUPower(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUPower(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU power support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUPower(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUPower(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuPowerSupported = supported;
             if (supported)
             {
                 adlx_double power = 0;
-                res = gpuMetrics->GPUPower(&power);
+                res = telemetryInterfaces.gpuMetrics->GPUPower(&power);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuPowerValue = power;
             }
@@ -2120,39 +2200,67 @@ extern "C" {
     }
 
     // Set GPU total board power(in W)
-    ADLX_Wrapper void GetGPUTotalBoardPower(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUTotalBoardPower(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU total board power support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUTotalBoardPower(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUTotalBoardPower(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuTotalBoardPowerSupported = supported;
             if (supported)
             {
                 adlx_double power = 0;
-                res = gpuMetrics->GPUTotalBoardPower(&power);
+                res = telemetryInterfaces.gpuMetrics->GPUTotalBoardPower(&power);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuTotalBoardPowerValue = power;
             }
         }
     }
 
-    // Set GPU fan speed (in RPM)
-    ADLX_Wrapper void GetGPUFanSpeed(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    // Set GPU intake temperature(in ?C)
+    ADLX_Wrapper void GetGPUIntakeTemperature(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
+        adlx_bool supported = false;
+
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUIntakeTemperature(&supported);
+        if (ADLX_SUCCEEDED(res))
+        {
+            telemetryData->gpuIntakeTemperatureSupported = supported;
+            if (supported)
+            {
+                adlx_double intakeTemperature = 0;
+                res = telemetryInterfaces.gpuMetrics->GPUIntakeTemperature(&intakeTemperature);
+                if (ADLX_SUCCEEDED(res))
+                    telemetryData->gpuIntakeTemperatureValue = intakeTemperature;
+            }
+        }
+    }
+
+    // Set GPU fan speed (in RPM)
+    ADLX_Wrapper void GetGPUFanSpeed(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
+    {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU fan speed support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUFanSpeed(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUFanSpeed(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuFanSpeedSupported = supported;
             if (supported)
             {
                 adlx_int fanSpeed = 0;
-                res = gpuMetrics->GPUFanSpeed(&fanSpeed);
+                res = telemetryInterfaces.gpuMetrics->GPUFanSpeed(&fanSpeed);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuFanSpeedValue = fanSpeed;
             }
@@ -2160,19 +2268,22 @@ extern "C" {
     }
 
     // Set GPU VRAM (in MB)
-    ADLX_Wrapper void GetGPUVRAM(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUVRAM(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU VRAM support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUVRAM(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUVRAM(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuVramSupported = supported;
             if (supported)
             {
                 adlx_int VRAM = 0;
-                res = gpuMetrics->GPUVRAM(&VRAM);
+                res = telemetryInterfaces.gpuMetrics->GPUVRAM(&VRAM);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuVramValue = VRAM;
             }
@@ -2180,43 +2291,106 @@ extern "C" {
     }
 
     // Set GPU Voltage (in mV)
-    ADLX_Wrapper void GetGPUVoltage(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUVoltage(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
+        if (telemetryInterfaces.gpuMetricsSupport == nullptr || telemetryInterfaces.gpuMetrics == nullptr)
+            return;
+
         adlx_bool supported = false;
 
         // Display GPU voltage support status
-        ADLX_RESULT res = gpuMetricsSupport->IsSupportedGPUVoltage(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport->IsSupportedGPUVoltage(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuVoltageSupported = supported;
             if (supported)
             {
                 adlx_int voltage = 0;
-                res = gpuMetrics->GPUVoltage(&voltage);
+                res = telemetryInterfaces.gpuMetrics->GPUVoltage(&voltage);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuVoltageValue = voltage;
             }
         }
     }
 
-    // GPU Fan Duty (in %)
-    ADLX_Wrapper void GetGPUFanDuty(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    // GPU memory temperature (in ?C)
+    ADLX_Wrapper void GetGPUMemoryTemperature(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
-        IADLXGPUMetricsSupport3Ptr gpuMetricsSupport3(gpuMetricsSupport);
-        IADLXGPUMetrics3Ptr gpuMetrics3(gpuMetrics);
-
-        if (gpuMetricsSupport3 == nullptr || gpuMetrics3 == nullptr)
+        if (telemetryInterfaces.gpuMetricsSupport1 == nullptr || telemetryInterfaces.gpuMetrics1 == nullptr)
             return;
 
         adlx_bool supported = false;
-        ADLX_RESULT res = gpuMetricsSupport3->IsSupportedGPUFanDuty(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport1->IsSupportedGPUMemoryTemperature(&supported);
+        if (ADLX_SUCCEEDED(res))
+        {
+            telemetryData->gpuMemoryTemperatureSupported = supported;
+            if (supported)
+            {
+                adlx_double memoryTemperature = 0;
+                res = telemetryInterfaces.gpuMetrics1->GPUMemoryTemperature(&memoryTemperature);
+                if (ADLX_SUCCEEDED(res))
+                    telemetryData->gpuMemoryTemperatureValue = memoryTemperature;
+            }
+        }
+    }
+
+    // NPU frequency (in MHz)
+    ADLX_Wrapper void GetNPUFrequency(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
+    {
+        if (telemetryInterfaces.gpuMetricsSupport1 == nullptr || telemetryInterfaces.gpuMetrics1 == nullptr)
+            return;
+
+        adlx_bool supported = false;
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport1->IsSupportedNPUFrequency(&supported);
+        if (ADLX_SUCCEEDED(res))
+        {
+            telemetryData->npuFrequencySupported = supported;
+            if (supported)
+            {
+                adlx_int npuFrequency = 0;
+                res = telemetryInterfaces.gpuMetrics1->NPUFrequency(&npuFrequency);
+                if (ADLX_SUCCEEDED(res))
+                    telemetryData->npuFrequencyValue = npuFrequency;
+            }
+        }
+    }
+
+    // NPU activity (in %)
+    ADLX_Wrapper void GetNPUActivity(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
+    {
+        if (telemetryInterfaces.gpuMetricsSupport1 == nullptr || telemetryInterfaces.gpuMetrics1 == nullptr)
+            return;
+
+        adlx_bool supported = false;
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport1->IsSupportedNPUActivityLevel(&supported);
+        if (ADLX_SUCCEEDED(res))
+        {
+            telemetryData->npuActivitySupported = supported;
+            if (supported)
+            {
+                adlx_int npuActivity = 0;
+                res = telemetryInterfaces.gpuMetrics1->NPUActivityLevel(&npuActivity);
+                if (ADLX_SUCCEEDED(res))
+                    telemetryData->npuActivityValue = npuActivity;
+            }
+        }
+    }
+
+    // GPU Fan Duty (in %)
+    ADLX_Wrapper void GetGPUFanDuty(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
+    {
+        if (telemetryInterfaces.gpuMetricsSupport3 == nullptr || telemetryInterfaces.gpuMetrics3 == nullptr)
+            return;
+
+        adlx_bool supported = false;
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport3->IsSupportedGPUFanDuty(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuFanDutySupported = supported;
             if (supported)
             {
                 adlx_int fanDuty = 0;
-                res = gpuMetrics3->GPUFanDuty(&fanDuty);
+                res = telemetryInterfaces.gpuMetrics3->GPUFanDuty(&fanDuty);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuFanDutyValue = fanDuty;
             }
@@ -2224,23 +2398,20 @@ extern "C" {
     }
 
     // GPU Shared Memory (in MB)
-    ADLX_Wrapper void GetGPUSharedMemory(IADLXGPUMetricsSupportPtr gpuMetricsSupport, IADLXGPUMetricsPtr gpuMetrics, AdlxTelemetryData* telemetryData)
+    ADLX_Wrapper void GetGPUSharedMemory(const AdlxTelemetryInterfaces& telemetryInterfaces, AdlxTelemetryData* telemetryData)
     {
-        IADLXGPUMetricsSupport2Ptr gpuMetricsSupport2(gpuMetricsSupport);
-        IADLXGPUMetrics2Ptr gpuMetrics2(gpuMetrics);
-
-        if (gpuMetricsSupport2 == nullptr || gpuMetrics2 == nullptr)
+        if (telemetryInterfaces.gpuMetricsSupport2 == nullptr || telemetryInterfaces.gpuMetrics2 == nullptr)
             return;
 
         adlx_bool supported = false;
-        ADLX_RESULT res = gpuMetricsSupport2->IsSupportedGPUSharedMemory(&supported);
+        ADLX_RESULT res = telemetryInterfaces.gpuMetricsSupport2->IsSupportedGPUSharedMemory(&supported);
         if (ADLX_SUCCEEDED(res))
         {
             telemetryData->gpuSharedMemorySupported = supported;
             if (supported)
             {
                 adlx_int sharedMemory = 0;
-                res = gpuMetrics2->GPUSharedMemory(&sharedMemory);
+                res = telemetryInterfaces.gpuMetrics2->GPUSharedMemory(&sharedMemory);
                 if (ADLX_SUCCEEDED(res))
                     telemetryData->gpuSharedMemoryValue = sharedMemory;
             }
@@ -2304,22 +2475,29 @@ extern "C" {
 
                     if (ADLX_SUCCEEDED(res1) && ADLX_SUCCEEDED(res2))
                     {
+                        AdlxTelemetryInterfaces telemetryInterfaces{};
+                        ResolveTelemetryInterfaces(gpuMetricsSupport, gpuMetrics, &telemetryInterfaces);
+
                         // Acquire the interface
                         gpuMetrics->Acquire();
 
-                        GetTimeStamp(gpuMetrics);
-                        GetGPUUsage(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUClockSpeed(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUVRAMClockSpeed(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUTemperature(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUHotspotTemperature(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUPower(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUFanSpeed(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUVRAM(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUVoltage(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUTotalBoardPower(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUFanDuty(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
-                        GetGPUSharedMemory(gpuMetricsSupport, gpuMetrics, adlxTelemetryData);
+                        GetTimeStamp(telemetryInterfaces);
+                        GetGPUUsage(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUClockSpeed(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUVRAMClockSpeed(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUTemperature(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUHotspotTemperature(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUPower(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUFanSpeed(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUVRAM(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUVoltage(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUTotalBoardPower(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUIntakeTemperature(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUMemoryTemperature(telemetryInterfaces, adlxTelemetryData);
+                        GetNPUFrequency(telemetryInterfaces, adlxTelemetryData);
+                        GetNPUActivity(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUFanDuty(telemetryInterfaces, adlxTelemetryData);
+                        GetGPUSharedMemory(telemetryInterfaces, adlxTelemetryData);
                         GetGPUFramerate(perfMonitoringService, adlxTelemetryData);
 
                         // Release the interface
