@@ -344,6 +344,26 @@ extern "C" {
         return res;
     }
 
+    ADLX_Wrapper ADLX_RESULT GetGPUType(adlx_uint index, ADLX_GPU_TYPE* gpuType)
+    {
+        if (gpuType == nullptr)
+            return ADLX_INVALID_ARGS;
+
+        ADLX_RESULT res = ADLX_FAIL;
+
+        IADLXGPUListPtr gpus;
+        res = g_ADLXHelp.GetSystemServices()->GetGPUs(&gpus);
+        if (ADLX_SUCCEEDED(res))
+        {
+            IADLXGPUPtr gpu;
+            res = gpus->At(index, &gpu);
+            if (ADLX_SUCCEEDED(res))
+                res = gpu->Type(gpuType);
+        }
+
+        return res;
+    }
+
     ADLX_Wrapper ADLX_RESULT GetDisplayGPU(adlx_uint index, adlx_int* uniqueId)
     {
         // Define return code
